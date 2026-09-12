@@ -35,6 +35,10 @@ All times UTC. Local time was EDT (UTC-4).
 
 **Note on a missing step.** The staging directory and the three text files written into it (`file1.txt`, `file2.txt`, `file3.txt`) do not appear in any table. See Finding 2.
 
+**Evidence:** `../evidence/screenshots/04-correlation-results.png` — the full correlated timeline across all four tables. Raw export: `../exports/correlation-timeline.csv`
+
+![Correlated timeline](../evidence/screenshots/04-correlation-results.png)
+
 ---
 
 ## 3. Affected assets
@@ -56,6 +60,10 @@ All times UTC. Local time was EDT (UTC-4).
 
 **Risk level attribution.** The Medium risk level was driven by three unresolved alerts from earlier controlled detection tests on the same host, not by the activity described in this report. No alert was raised for this activity at any point.
 
+![Device inventory](../evidence/screenshots/00-device-onboarded.png)
+
+Device identity was confirmed as a single DeviceId despite two spellings appearing in the portal: `../evidence/screenshots/01-deviceid-count.png`
+
 **Scoping consequence of workgroup membership.** The host is standalone and not joined to Active Directory or Entra ID. Two consequences follow. First, no identity telemetry exists for correlation — `IdentityLogonEvents` and cloud sign-in data are unavailable for this device. Second, lateral movement using domain credentials is out of scope, which would not be true in an enterprise environment.
 
 ---
@@ -76,6 +84,16 @@ The activity was not surfaced by any alert. It was found by hunting, using the f
 | What was PowerShell instructed to do? | `DeviceEvents` where `ActionType == "PowerShellCommand"` |
 
 **Step 3 — Correlation.** A single `union` query combined all four tables into one chronological view, normalising their differing column names into common `EventType` and `Detail` fields. This produced the timeline in Section 2 and reduced investigation time from repeated manual searching to a single query.
+
+**Evidence for each step:**
+
+| Query | Screenshot |
+|---|---|
+| Process discovery | `../evidence/screenshots/03-kql-process-discovery.png` |
+| File events | `../evidence/screenshots/03-kql-file-events.png` |
+| PowerShell commands | `../evidence/screenshots/03-kql-powershell-commands.png` |
+| Correlation query | `../evidence/screenshots/04-kql-correlation.png` |
+| Device timeline searches | `../evidence/screenshots/02-timeline-discovery-systeminfo.png`, `02-timeline-discovery-netlocalgroup.png`, `02-timeline-file-events.png`, `02-timeline-network.png` |
 
 All queries were scoped by `DeviceId` rather than `DeviceName`. The device appeared in the portal under two spellings (`Windows_11Pro` and `windows_11pro`); a `summarize count() by DeviceName, DeviceId` query confirmed a single DeviceId, establishing that the casing difference was cosmetic. Filtering on device name would have risked missing events.
 
@@ -101,8 +119,16 @@ All queries were scoped by `DeviceId` rather than `DeviceName`. The device appea
 **Finding 1 — Technique-tagged telemetry below alert threshold.**
 Defender for Endpoint observed the activity and labelled individual events with ATT&CK techniques directly in the device timeline, including T1082 with five additional techniques, T1069.001 with T1087.001, and T1005 with six additional techniques. Despite this, no alert was generated for any event in the chain. The platform recognised and classified the behaviour without deeming it alert-worthy. This is the central finding of the investigation: alert absence is not threat absence.
 
+![Alert queue showing nothing new](../evidence/screenshots/02-alert-queue-after.png)
+
+*The alert queue after the chain completed — only the three earlier controlled test alerts, all resolved.*
+
 **Finding 2 — Selective file telemetry.**
 `archive.zip` and `page.html` were both recorded in `DeviceFileEvents`. The three text files created in the staging directory immediately beforehand (`file1.txt`, `file2.txt`, `file3.txt`) were not, and were confirmed absent by direct query rather than by timeline search alone. The precise mechanism was not determined. The observable pattern is that small text files written to a user temp directory were not reported while an archive and a downloaded HTML file were. This represents a visibility gap: an attacker staging data in small plaintext files would leave no file-creation evidence on this sensor configuration.
+
+![File events query](../evidence/screenshots/03-kql-file-events.png)
+
+![Timeline search returning nothing](../evidence/screenshots/02-timeline-file-not-found.png)
 
 **Finding 3 — Process handoff in `net.exe`.**
 `net.exe localgroup administrators` executes by spawning `net1.exe`, which performs the actual enumeration. A detection filtering only on `net.exe` would match the parent but could miss the child, depending on which event carries the relevant fields. Both binaries were included in the detection logic developed in Section 9.
@@ -167,6 +193,13 @@ A scheduled custom detection rule was created from the validated hunting logic.
 - **No automated response.** Remediation actions were deliberately left unconfigured. The rule's false-positive rate is unmeasured, and automated isolation on an untuned detection risks more operational disruption than the threat it addresses.
 
 **Outcome.** The rule was deployed enabled and executed on its scheduled run, generating a Medium-severity alert with the correct category and entity mapping. The full detection path was exercised: hunting query, scheduled execution, alert generation, queue delivery.
+
+![Detection rule deployed](../evidence/screenshots/05-detection-rule-created.png)
+
+![Triggered alert](../evidence/screenshots/05-detection-rule-summary.png)
+
+Deduplicated query result: `../evidence/screenshots/05-detection-dedup-query.png` — raw export: `../exports/detection-rule-match.csv`
+Remediation actions left unconfigured: `../evidence/screenshots/05-detection-rule-actions.png`
 
 **Known limitation.** The rule has been validated only against the single lab incident it was derived from. It has not been run against production traffic and its false-positive rate is unknown. In a real environment it would require a tuning period with actions disabled before any response automation was considered.
 

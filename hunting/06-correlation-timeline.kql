@@ -1,8 +1,10 @@
 // Single chronological view across four tables.
 // union stacks rows vertically; each subquery renames its key field to
 // Detail and tags its origin as EventType so the rows line up.
-// Reduced 25 rows to 13 after filtering console-host and PowerShell
-// internal noise.
+// Filtering reduced this from 25 rows to 13 using has_any, then to 10
+// using an anchored regex - has_any is a term match and still matched
+// rows like ProgressBarHelper "Compress-Archive" where the cmdlet name
+// appears mid-string. The ^ anchor requires it at the start.
 let LabDevice = "<DEVICE-ID>";
 let StartTime = datetime(2026-09-07 23:38:00);
 let EndTime = datetime(2026-09-07 23:45:00);

@@ -1,0 +1,11 @@
+﻿Timestamp,EventType,Detail
+"Sep 7, 2026 7:38:39 PM",File,FileCreated: __PSScriptPolicyTest_dq2bufsn.4jx.ps1
+"Sep 7, 2026 7:38:39 PM",File,FileCreated: __PSScriptPolicyTest_wqlvhmwe.rrf.psm1
+"Sep 7, 2026 7:38:59 PM",Process,systeminfo.exe
+"Sep 7, 2026 7:39:39 PM",Process,"""net.exe"" localgroup administrators"
+"Sep 7, 2026 7:40:53 PM",Command,"Compress-Archive -Path ""$env:TEMP\stage\*"" -DestinationPath ""$env:TEMP\archive.zip"" -Force"
+"Sep 7, 2026 7:40:53 PM",File,FileCreated: archive.zip
+"Sep 7, 2026 7:41:03 PM",Command,"Invoke-WebRequest -Uri ""https://www.microsoft.com"" -OutFile ""$env:TEMP\page.html"" -UseBasicParsing"
+"Sep 7, 2026 7:41:03 PM",Network,www.microsoft.com (23.48.10.36:443)
+"Sep 7, 2026 7:41:03 PM",File,FileCreated: page.html
+"Sep 7, 2026 7:41:10 PM",Command,"Remove-Item ""$env:TEMP\archive.zip"",""$env:TEMP\stage"",""$env:TEMP\page.html"" -Recurse -Force"

@@ -1,0 +1,2 @@
+﻿Timestamp,ReportId,DeviceId,DeviceName,AccountName,DiscoveryCommand,ArchiveCommand,RemoteUrl,RemoteIP
+"Sep 7, 2026 7:38:59 PM",1252,<DEVICE-ID>,windows_11pro,LAB-USER,systeminfo.exe,"Compress-Archive -Path ""$env:TEMP\stage\*"" -DestinationPath ""$env:TEMP\archive.zip"" -Force",www.microsoft.com,23.48.10.36
