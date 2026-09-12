@@ -2,7 +2,7 @@
 
 A hands-on Microsoft Defender for Endpoint project covering endpoint telemetry analysis, threat hunting with KQL, custom detection development, and incident documentation.
 
-The central finding: a six-step activity chain mapping to seven MITRE ATT&CK techniques was executed on a monitored endpoint and **generated no alerts**, despite Defender tagging the individual events with ATT&CK techniques in the device timeline. The activity was found by hunting, not by alerting.
+The central finding: a six-step activity chain mapping to eight MITRE ATT&CK techniques was executed on a monitored endpoint and **generated no alerts**, despite Defender tagging the individual events with ATT&CK techniques in the device timeline. The activity was found by hunting, not by alerting.
 
 ![Alert queue after the activity chain](evidence/screenshots/02-alert-queue-after.png)
 
