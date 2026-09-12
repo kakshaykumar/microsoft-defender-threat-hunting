@@ -1,0 +1,38 @@
+// Single chronological view across four tables.
+// union stacks rows vertically; each subquery renames its key field to
+// Detail and tags its origin as EventType so the rows line up.
+// Reduced 25 rows to 13 after filtering console-host and PowerShell
+// internal noise.
+let LabDevice = "<DEVICE-ID>";
+let StartTime = datetime(2026-09-07 23:38:00);
+let EndTime = datetime(2026-09-07 23:45:00);
+union
+(
+    DeviceProcessEvents
+    | where DeviceId == LabDevice and Timestamp between (StartTime .. EndTime)
+    | where InitiatingProcessFileName =~ "powershell.exe"
+    | where FileName != "conhost.exe"
+    | extend EventType = "Process", Detail = ProcessCommandLine
+),
+(
+    DeviceFileEvents
+    | where DeviceId == LabDevice and Timestamp between (StartTime .. EndTime)
+    | where InitiatingProcessFileName =~ "powershell.exe"
+    | extend EventType = "File", Detail = strcat(ActionType, ": ", FileName)
+),
+(
+    DeviceNetworkEvents
+    | where DeviceId == LabDevice and Timestamp between (StartTime .. EndTime)
+    | where InitiatingProcessFileName =~ "powershell.exe"
+    | extend EventType = "Network", Detail = strcat(RemoteUrl, " (", RemoteIP, ":", tostring(RemotePort), ")")
+),
+(
+    DeviceEvents
+    | where DeviceId == LabDevice and Timestamp between (StartTime .. EndTime)
+    | where ActionType == "PowerShellCommand"
+    | extend Detail = tostring(parse_json(AdditionalFields).Command)
+    | where Detail matches regex @"^(Compress-Archive|Invoke-WebRequest|Remove-Item|New-Item|Out-File)"
+    | extend EventType = "Command"
+)
+| project Timestamp, EventType, Detail
+| order by Timestamp asc

@@ -1,0 +1,8 @@
+// Discovery binaries spawned by PowerShell on the lab host.
+// Returned 3 rows: conhost.exe, systeminfo.exe, net.exe localgroup administrators.
+DeviceProcessEvents
+| where DeviceId == "<DEVICE-ID>"
+| where Timestamp between (datetime(2026-09-07 23:38:00) .. datetime(2026-09-07 23:45:00))
+| where InitiatingProcessFileName =~ "powershell.exe"
+| project Timestamp, FileName, ProcessCommandLine, InitiatingProcessFileName, AccountName
+| order by Timestamp asc

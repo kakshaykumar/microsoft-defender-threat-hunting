@@ -1,0 +1,50 @@
+// Custom detection rule: PowerShell Discovery to Archive to Network Chain
+// Frequency: every 24 hours | Severity: Medium | Tactic: Discovery
+// Techniques: T1082, T1069.001 (T1560.001 and T1071.001 documented in
+// the rule description - the portal permits one tactic per rule)
+// Remediation actions: none configured, deliberately.
+//
+// Alerts when one device shows PowerShell-initiated discovery, then
+// archive creation within 10 minutes, then an outbound connection
+// within a further 10 minutes.
+//
+// Why a combination: alerting on Compress-Archive alone fires on every
+// backup script. Three behaviours in a bounded sequence is narrow
+// enough to mean something.
+//
+// Required columns: Timestamp, ReportId and DeviceId must be projected
+// or Defender cannot attach the alert to a device or link back to the
+// source event.
+
+let LookbackWindow = 10m;
+let DiscoveryEvents =
+    DeviceProcessEvents
+    | where FileName in~ ("systeminfo.exe", "net.exe", "net1.exe", "whoami.exe", "ipconfig.exe")
+    | where InitiatingProcessFileName =~ "powershell.exe"
+    | project DeviceId, DeviceName, AccountName, DiscoveryTime = Timestamp,
+              DiscoveryCommand = ProcessCommandLine,
+              DiscoveryReportId = ReportId;
+let ArchiveEvents =
+    DeviceEvents
+    | where ActionType == "PowerShellCommand"
+    | extend Command = tostring(parse_json(AdditionalFields).Command)
+    | where Command matches regex @"^(Compress-Archive|New-Object\s+System\.IO\.Compression)"
+    | project DeviceId, ArchiveTime = Timestamp, ArchiveCommand = Command;
+let NetworkEvents =
+    DeviceNetworkEvents
+    | where InitiatingProcessFileName =~ "powershell.exe"
+    | where isnotempty(RemoteUrl)
+    | project DeviceId, NetworkTime = Timestamp, RemoteUrl, RemoteIP;
+DiscoveryEvents
+| join kind=inner ArchiveEvents on DeviceId
+| where ArchiveTime between (DiscoveryTime .. DiscoveryTime + LookbackWindow)
+| join kind=inner NetworkEvents on DeviceId
+| where NetworkTime between (ArchiveTime .. ArchiveTime + LookbackWindow)
+// Deduplication: two discovery commands paired with the same archive
+// produced two identical alerts for one incident. arg_min keeps the
+// earliest discovery per device per archive event.
+| summarize arg_min(DiscoveryTime, *) by DeviceId, ArchiveTime
+| project Timestamp = DiscoveryTime, ReportId = DiscoveryReportId,
+          DeviceId, DeviceName, AccountName,
+          DiscoveryCommand, ArchiveCommand, RemoteUrl, RemoteIP
+| order by Timestamp desc

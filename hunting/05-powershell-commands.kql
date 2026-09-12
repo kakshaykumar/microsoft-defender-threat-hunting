@@ -1,0 +1,11 @@
+// PowerShell cmdlet text, which does not appear in DeviceProcessEvents
+// because cmdlets execute inside powershell.exe without spawning a process.
+// AdditionalFields is JSON; parse_json reads it, .Command selects the key,
+// tostring converts it so string operators work.
+DeviceEvents
+| where DeviceId == "<DEVICE-ID>"
+| where ActionType == "PowerShellCommand"
+| extend Command = tostring(parse_json(AdditionalFields).Command)
+| where Command !in ("prompt", "PSConsoleHostReadLine", "out-lineoutput", "Out-Default")
+| project Timestamp, Command
+| order by Timestamp asc

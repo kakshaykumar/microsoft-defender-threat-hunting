@@ -1,0 +1,7 @@
+// Outbound connections initiated by PowerShell.
+// Returned 1 row: www.microsoft.com (23.48.10.36:443) at 23:41:03 UTC.
+DeviceNetworkEvents
+| where DeviceId == "<DEVICE-ID>"
+| where InitiatingProcessFileName =~ "powershell.exe"
+| project Timestamp, RemoteUrl, RemoteIP, RemotePort, InitiatingProcessCommandLine
+| order by Timestamp asc

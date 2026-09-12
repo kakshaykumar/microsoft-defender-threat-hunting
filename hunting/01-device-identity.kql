@@ -1,0 +1,4 @@
+// Confirms whether two spellings of a hostname are one device or two.
+// Run before any device-scoped hunt: filter on DeviceId, never DeviceName.
+DeviceInfo
+| summarize count() by DeviceName, DeviceId

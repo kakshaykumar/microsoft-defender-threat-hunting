@@ -1,0 +1,10 @@
+// Tests which of the created files were recorded by the sensor.
+// Returned 2 rows: archive.zip and page.html only.
+// file1.txt, file2.txt and file3.txt were NOT recorded - see report Finding 2.
+// in~ used rather than has_any: has_any is a term match and wrongly
+// matched an unrelated file named learnmore-page.html.
+DeviceFileEvents
+| where DeviceId == "<DEVICE-ID>"
+| where FileName in~ ("file1.txt", "file2.txt", "file3.txt", "archive.zip", "page.html")
+| project Timestamp, ActionType, FileName, FolderPath, InitiatingProcessFileName
+| order by Timestamp asc
