@@ -112,6 +112,8 @@ All queries were scoped by `DeviceId` rather than `DeviceName`. The device appea
 | T1071.001 | Application Layer Protocol: Web Protocols | Outbound HTTPS to 23.48.10.36:443 initiated by `powershell.exe` at 23:41:03 |
 | T1070.004 | Indicator Removal: File Deletion | `Remove-Item -Recurse -Force` at 23:41:10 removing the archive, staging directory and downloaded file |
 
+Eight techniques are mapped above. `T1005 Data from Local System` appears in the evidence column as one of the tags Defender applied to the staging event in the device timeline; it is recorded as observed platform output rather than mapped separately.
+
 ---
 
 ## 6. Findings
